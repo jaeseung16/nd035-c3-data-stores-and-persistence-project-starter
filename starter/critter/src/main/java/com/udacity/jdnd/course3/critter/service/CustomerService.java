@@ -1,7 +1,7 @@
 package com.udacity.jdnd.course3.critter.service;
 
 import com.udacity.jdnd.course3.critter.entity.Customer;
-import com.udacity.jdnd.course3.critter.entity.Pet;
+import com.udacity.jdnd.course3.critter.pet.PetDTO;
 import com.udacity.jdnd.course3.critter.repository.CustomerRepository;
 import com.udacity.jdnd.course3.critter.user.CustomerDTO;
 import org.slf4j.Logger;
@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,9 @@ public class CustomerService {
 
     @Autowired
     private CustomerRepository customerRepository;
+
+    @Autowired
+    private PetService petService;
 
     public CustomerDTO saveCustomer(CustomerDTO customerDTO) {
         logger.info("Saving employeeDTO.getDaysAvailable() = {}", customerDTO.getName());
@@ -31,24 +35,32 @@ public class CustomerService {
         customerRepository.persist(customer);
         logger.info("Persisting customer.getId() = {}", customer.getId());
 
-
-        return convertEntityToDTO(customer);
+        return convertEntityToDTO(customer, customerDTO.getPetIds());
     }
 
     public List<CustomerDTO> getAllCustomers() {
-        return customerRepository.findAll().stream()
-                .map(CustomerService::convertEntityToDTO)
-                .collect(Collectors.toList());
+        List<CustomerDTO> customerDTOList = new ArrayList<>();
+
+        List<Customer> customerList = customerRepository.findAll();
+
+        for (Customer customer : customerList) {
+            List<PetDTO> petDTOList = petService.getPetByOwner(customer.getId());
+            List<Long> petIds = petDTOList.stream().map(PetDTO::getId).collect(Collectors.toList());
+
+            CustomerDTO customerDTO = convertEntityToDTO(customer, petIds);
+            customerDTOList.add(customerDTO);
+        }
+
+        return customerDTOList;
     }
 
-    private static CustomerDTO convertEntityToDTO(Customer customer) {
+    private static CustomerDTO convertEntityToDTO(Customer customer, List<Long> petIds) {
         CustomerDTO customerDTO = new CustomerDTO();
-
         customerDTO.setId(customer.getId());
         customerDTO.setName(customer.getName());
         customerDTO.setNotes(customer.getNotes());
         customerDTO.setPhoneNumber(customer.getPhoneNumber());
-
+        customerDTO.setPetIds(petIds);
         return customerDTO;
     }
 }

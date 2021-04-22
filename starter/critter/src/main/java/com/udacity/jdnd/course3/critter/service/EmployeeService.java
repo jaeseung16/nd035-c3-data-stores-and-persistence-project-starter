@@ -5,14 +5,15 @@ import com.udacity.jdnd.course3.critter.entity.Employee;
 import com.udacity.jdnd.course3.critter.entity.Skill;
 import com.udacity.jdnd.course3.critter.repository.DayAvailableRepository;
 import com.udacity.jdnd.course3.critter.repository.EmployeeRepository;
+import com.udacity.jdnd.course3.critter.repository.SkillRepository;
 import com.udacity.jdnd.course3.critter.user.EmployeeDTO;
+import com.udacity.jdnd.course3.critter.user.EmployeeRequestDTO;
 import com.udacity.jdnd.course3.critter.user.EmployeeSkill;
+import org.apache.catalina.filters.AddDefaultCharsetFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.DayOfWeek;
 import java.util.*;
@@ -28,6 +29,9 @@ public class EmployeeService {
     @Autowired
     private DayAvailableRepository dayAvailableRepository;
 
+    @Autowired
+    private SkillRepository skillRepository;
+
     public EmployeeDTO saveEmployee(EmployeeDTO employeeDTO) {
         logger.info("Saving employeeDTO.getDaysAvailable() = {}", employeeDTO.getDaysAvailable());
         Employee employee = new Employee();
@@ -38,6 +42,7 @@ public class EmployeeService {
         for (EmployeeSkill employeeSkill : employeeDTO.getSkills()) {
             Skill skill = new Skill();
             skill.setSkill(employeeSkill);
+            skill.setEmployee(employee);
             skillList.add(skill);
         }
         employee.setSkills(skillList);
@@ -77,6 +82,67 @@ public class EmployeeService {
         dayAvailable.setEmployeeId(employeeId);
 
         dayAvailableRepository.save(dayAvailable);
+    }
+
+    public List<EmployeeDTO> findEmployeesForService(EmployeeRequestDTO employeeDTO) {
+        List<EmployeeDTO> employeeDTOList = new ArrayList<>();
+
+        List<Skill> skillList = skillRepository.findBySkillIn(employeeDTO.getSkills());
+
+        List<Employee> employeeList = skillList.stream()
+                .map(Skill::getEmployee)
+                .collect(Collectors.toList());
+
+        DayOfWeek dayOfWeek = employeeDTO.getDate().getDayOfWeek();
+
+        for (Employee employee : employeeList) {
+            DayAvailable dayAvailable = dayAvailableRepository.findById(employee.getId()).orElse(null);
+
+            boolean matchedDayAvailable = false;
+            if (dayAvailable != null) {
+                switch (dayOfWeek) {
+                    case SUNDAY:
+                        matchedDayAvailable = dayAvailable.getSunday();
+                        break;
+                    case MONDAY:
+                        matchedDayAvailable = dayAvailable.getMonday();
+                        break;
+                    case TUESDAY:
+                        matchedDayAvailable = dayAvailable.getTuesday();
+                        break;
+                    case WEDNESDAY:
+                        matchedDayAvailable = dayAvailable.getWednesday();
+                        break;
+                    case THURSDAY:
+                        matchedDayAvailable = dayAvailable.getThursday();
+                        break;
+                    case FRIDAY:
+                        matchedDayAvailable = dayAvailable.getFriday();
+                        break;
+                    case SATURDAY:
+                        matchedDayAvailable = dayAvailable.getSaturday();
+                        break;
+                }
+            }
+
+            boolean matchedSkills = true;
+            for (EmployeeSkill skill : employeeDTO.getSkills()) {
+                List<EmployeeSkill> skillListFromEmployee = employee.getSkills().stream()
+                        .map(Skill::getSkill)
+                        .collect(Collectors.toList());
+
+                if (!skillListFromEmployee.contains(skill)) {
+                    matchedSkills = false;
+                    break;
+                }
+            }
+
+            if (matchedDayAvailable && matchedSkills) {
+                employeeDTOList.add(convertEntityToDTO(employee, dayAvailable));
+            }
+        }
+
+        return employeeDTOList;
     }
 
     private Employee convertDTOToEntity(EmployeeDTO employeeDTO) {

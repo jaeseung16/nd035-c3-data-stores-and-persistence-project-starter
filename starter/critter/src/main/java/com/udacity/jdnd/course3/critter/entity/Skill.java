@@ -10,7 +10,7 @@ public class Skill {
     @GeneratedValue
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
@@ -39,5 +39,12 @@ public class Skill {
 
     public void setSkill(EmployeeSkill skill) {
         this.skill = skill;
+    }
+
+    @Override
+    public String toString() {
+        return "Skill[id=" + id + "," +
+                "skill=" + skill + "," +
+                "employee=" + employee + "]";
     }
 }

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.DayOfWeek;
 import java.util.*;
@@ -44,31 +45,7 @@ public class EmployeeService {
         DayAvailable dayAvailable = new DayAvailable();
 
         if (employeeDTO.getDaysAvailable() != null && !employeeDTO.getDaysAvailable().isEmpty()) {
-            for (DayOfWeek dayOfWeek : employeeDTO.getDaysAvailable()) {
-                switch (dayOfWeek) {
-                    case SUNDAY:
-                        dayAvailable.setSunday(true);
-                        break;
-                    case MONDAY:
-                        dayAvailable.setMonday(true);
-                        break;
-                    case TUESDAY:
-                        dayAvailable.setTuesday(true);
-                        break;
-                    case WEDNESDAY:
-                        dayAvailable.setWednesday(true);
-                        break;
-                    case THURSDAY:
-                        dayAvailable.setThursday(true);
-                        break;
-                    case FRIDAY:
-                        dayAvailable.setFriday(true);
-                        break;
-                    case SATURDAY:
-                        dayAvailable.setSaturday(true);
-                        break;
-                }
-            }
+            dayAvailable = getDayAvailable(employeeDTO.getDaysAvailable());
         }
 
         logger.info("Persisting employee.getId() = {}", employee.getId());
@@ -95,6 +72,53 @@ public class EmployeeService {
         return convertEntityToDTO(employee, dayAvailable);
     }
 
+    public void setAvailability(Set<DayOfWeek> daysAvailable, long employeeId) {
+        DayAvailable dayAvailable = getDayAvailable(daysAvailable);
+        dayAvailable.setEmployeeId(employeeId);
+
+        dayAvailableRepository.save(dayAvailable);
+    }
+
+    private Employee convertDTOToEntity(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        employee.setId(employeeDTO.getId() > 0 ? employeeDTO.getId() : null);
+        employee.setName(employeeDTO.getName());
+        employee.setSkills(employee.getSkills());
+        return employee;
+    }
+
+    private DayAvailable getDayAvailable(Set<DayOfWeek> dayOfWeeks) {
+        DayAvailable dayAvailable = new DayAvailable();
+
+        for (DayOfWeek dayOfWeek : dayOfWeeks) {
+            switch (dayOfWeek) {
+                case SUNDAY:
+                    dayAvailable.setSunday(true);
+                    break;
+                case MONDAY:
+                    dayAvailable.setMonday(true);
+                    break;
+                case TUESDAY:
+                    dayAvailable.setTuesday(true);
+                    break;
+                case WEDNESDAY:
+                    dayAvailable.setWednesday(true);
+                    break;
+                case THURSDAY:
+                    dayAvailable.setThursday(true);
+                    break;
+                case FRIDAY:
+                    dayAvailable.setFriday(true);
+                    break;
+                case SATURDAY:
+                    dayAvailable.setSaturday(true);
+                    break;
+            }
+        }
+
+        return dayAvailable;
+    }
+
     private EmployeeDTO convertEntityToDTO(Employee employee, DayAvailable dayAvailable) {
         EmployeeDTO employeeDTO = new EmployeeDTO();
         employeeDTO.setId(employee.getId());
@@ -105,33 +129,39 @@ public class EmployeeService {
                 .collect(Collectors.toSet());
         employeeDTO.setSkills(skillSet);
 
-        Set<DayOfWeek> dayOfWeeks = new HashSet<>();
-        if (dayAvailable.getSunday()) {
-            dayOfWeeks.add(DayOfWeek.SUNDAY);
-        }
-        if (dayAvailable.getMonday()) {
-            dayOfWeeks.add(DayOfWeek.MONDAY);
-        }
-        if (dayAvailable.getTuesday()) {
-            dayOfWeeks.add(DayOfWeek.TUESDAY);
-        }
-        if (dayAvailable.getWednesday()) {
-            dayOfWeeks.add(DayOfWeek.WEDNESDAY);
-        }
-        if (dayAvailable.getThursday()) {
-            dayOfWeeks.add(DayOfWeek.THURSDAY);
-        }
-        if (dayAvailable.getFriday()) {
-            dayOfWeeks.add(DayOfWeek.FRIDAY);
-        }
-        if (dayAvailable.getSaturday()) {
-            dayOfWeeks.add(DayOfWeek.SATURDAY);
-        }
-
+        Set<DayOfWeek> dayOfWeeks = populateDayOfWeekSet(dayAvailable);
         if (!dayOfWeeks.isEmpty()) {
             employeeDTO.setDaysAvailable(dayOfWeeks);
         }
 
         return employeeDTO;
+    }
+
+    private Set<DayOfWeek> populateDayOfWeekSet(DayAvailable dayAvailable) {
+        Set<DayOfWeek> dayOfWeekSet = new HashSet<>();
+
+        if (dayAvailable.getSunday()) {
+            dayOfWeekSet.add(DayOfWeek.SUNDAY);
+        }
+        if (dayAvailable.getMonday()) {
+            dayOfWeekSet.add(DayOfWeek.MONDAY);
+        }
+        if (dayAvailable.getTuesday()) {
+            dayOfWeekSet.add(DayOfWeek.TUESDAY);
+        }
+        if (dayAvailable.getWednesday()) {
+            dayOfWeekSet.add(DayOfWeek.WEDNESDAY);
+        }
+        if (dayAvailable.getThursday()) {
+            dayOfWeekSet.add(DayOfWeek.THURSDAY);
+        }
+        if (dayAvailable.getFriday()) {
+            dayOfWeekSet.add(DayOfWeek.FRIDAY);
+        }
+        if (dayAvailable.getSaturday()) {
+            dayOfWeekSet.add(DayOfWeek.SATURDAY);
+        }
+
+        return dayOfWeekSet;
     }
 }

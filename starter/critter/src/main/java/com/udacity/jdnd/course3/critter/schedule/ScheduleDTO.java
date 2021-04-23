@@ -48,4 +48,13 @@ public class ScheduleDTO {
     public void setActivities(Set<EmployeeSkill> activities) {
         this.activities = activities;
     }
+
+    @Override
+    public String toString() {
+        return "ScheduleDTO=[id=" + id + "," +
+                "date=" + date + "," +
+                "petIds=" + petIds + "," +
+                "employeeIds=" + employeeIds + "," +
+                "activities=" + activities + "]";
+    }
 }

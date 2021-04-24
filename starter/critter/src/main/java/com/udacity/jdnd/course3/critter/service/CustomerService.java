@@ -54,6 +54,15 @@ public class CustomerService {
         return customerDTOList;
     }
 
+    public CustomerDTO findCustomer(long customerId) {
+        Customer customer = customerRepository.find(customerId);
+        List<Long> petIds = petService.getPetByOwner(customer.getId()).stream()
+                .map(PetDTO::getId)
+                .collect(Collectors.toList());
+
+        return convertEntityToDTO(customer, petIds);
+    }
+
     public CustomerDTO findCustomerByPetId(long petId) {
         PetDTO petDTO = petService.getPet(petId);
 

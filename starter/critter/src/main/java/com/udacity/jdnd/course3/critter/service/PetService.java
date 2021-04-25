@@ -46,6 +46,11 @@ public class PetService {
                 .collect(Collectors.toList());
     }
 
+    public List<PetDTO> getPets() {
+        List<Pet> petList = petRepository.findAll();
+        return petList.stream().map(this::convertEntityToDTO).collect(Collectors.toList());
+    }
+
     private PetDTO convertEntityToDTO(Pet pet) {
         PetDTO petDTO = new PetDTO();
         petDTO.setId(pet.getId());

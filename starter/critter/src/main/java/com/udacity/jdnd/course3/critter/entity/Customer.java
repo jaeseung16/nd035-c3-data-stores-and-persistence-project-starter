@@ -3,7 +3,6 @@ package com.udacity.jdnd.course3.critter.entity;
 import org.hibernate.annotations.Nationalized;
 
 import javax.persistence.*;
-import java.util.List;
 
 @NamedQueries({
       @NamedQuery(name = "Customer.findAll", query = "SELECT c from Customer c")

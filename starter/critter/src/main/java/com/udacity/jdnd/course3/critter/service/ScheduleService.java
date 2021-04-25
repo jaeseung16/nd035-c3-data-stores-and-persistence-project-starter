@@ -30,112 +30,66 @@ public class ScheduleService {
     private CustomerService customerService;
 
     public ScheduleDTO createSchedule(ScheduleDTO scheduleDTO) {
+        logger.info("Creating schedule with request={}", scheduleDTO);
         Schedule schedule = new Schedule();
         schedule.setDate(scheduleDTO.getDate());
+
         scheduleRepository.persist(schedule);
-
-        logger.info("Persisted schedule.getId() = {}", schedule.getId());
-
         Long scheduleId = schedule.getId();
-        for (Long employeeId : scheduleDTO.getEmployeeIds()) {
-            scheduleDAO.addEmployeeBySchedule(employeeId, scheduleId);
-        }
-        for (Long petId : scheduleDTO.getPetIds()) {
-            scheduleDAO.addPetBySchedule(petId, scheduleId);
-        }
-        for (EmployeeSkill skill : scheduleDTO.getActivities()) {
-            scheduleDAO.addActivityBySchedule(skill, scheduleId);
-        }
+        scheduleDTO.getEmployeeIds()
+                .forEach(employeeId -> scheduleDAO.addEmployeeBySchedule(employeeId, scheduleId));
+        scheduleDTO.getPetIds()
+                .forEach(petId -> scheduleDAO.addPetBySchedule(petId, scheduleId));
+        scheduleDTO.getActivities()
+                .forEach(activity -> scheduleDAO.addActivityBySchedule(activity, scheduleId));
+        logger.info("Persisted schedule: Id={}", schedule.getId());
 
-        List<Long> employeeIds = scheduleDAO.findEmployeeBySchedule(scheduleId);
-        List<Long> petIds = scheduleDAO.findPetBySchedule(scheduleId);
-        List<EmployeeSkill> activities = scheduleDAO.findActivityBySchedule(scheduleId);
+        ScheduleDTO scheduleDTOToReturn = getDTOByScheduleId(scheduleId);
 
-        ScheduleDTO scheduleDTOToReturn = convertEntityToDTO(
-                scheduleRepository.find(scheduleId),
-                petIds,
-                employeeIds,
-                activities);
-
-        logger.info("Returning scheduleDTO = {}", scheduleDTOToReturn);
+        logger.info("Returning {}", scheduleDTOToReturn);
         return scheduleDTOToReturn;
     }
 
     public List<ScheduleDTO> getAllSchedules() {
+        logger.info("Retrieving all schedules");
         List<ScheduleDTO> results = new ArrayList<>();
 
         List<Schedule> scheduleList = scheduleRepository.getAllSchedules();
-        logger.info("scheduleList.size() = {}", scheduleList.size());
-        if (!scheduleList.isEmpty()) {
-            for (Schedule schedule : scheduleList) {
-                Long scheduleId = schedule.getId();
-                List<Long> employeeIds = scheduleDAO.findEmployeeBySchedule(scheduleId);
-                List<Long> petIds = scheduleDAO.findPetBySchedule(scheduleId);
-                List<EmployeeSkill> activities = scheduleDAO.findActivityBySchedule(scheduleId);
-
-                ScheduleDTO scheduleDTO = convertEntityToDTO(
-                        scheduleRepository.find(scheduleId),
-                        petIds,
-                        employeeIds,
-                        activities);
-
-                logger.info("** scheduleDTO = {}, petIDs = {}, employeeIds ={}, activities = {}", scheduleDTO, petIds, employeeIds, activities);
-                results.add(scheduleDTO);
-            }
+        for (Schedule schedule : scheduleList) {
+            results.add(getDTOByScheduleId(schedule.getId()));
         }
 
-        logger.info("Returning results = {}", results);
+        logger.info("Returning {} schedules", results.size());
         return results;
-
     }
 
     public List<ScheduleDTO> getScheduleForEmployee(long employeeId) {
+        logger.info("Retrieving schedules for an employee: id={}", employeeId);
         List<ScheduleDTO> results = new ArrayList<>();
 
         List<Long> scheduleIds = scheduleDAO.findScheduleByEmployee(employeeId);
-
         for (Long scheduleId : scheduleIds) {
-            List<Long> employeeIds = scheduleDAO.findEmployeeBySchedule(scheduleId);
-            List<Long> petIds = scheduleDAO.findPetBySchedule(scheduleId);
-            List<EmployeeSkill> activities = scheduleDAO.findActivityBySchedule(scheduleId);
-
-            ScheduleDTO scheduleDTO = convertEntityToDTO(
-                    scheduleRepository.find(scheduleId),
-                    petIds,
-                    employeeIds,
-                    activities);
-
-            logger.info("** scheduleDTO = {}, petIDs = {}, employeeIds ={}, activities = {}", scheduleDTO, petIds, employeeIds, activities);
-            results.add(scheduleDTO);
+            results.add(getDTOByScheduleId(scheduleId));
         }
 
+        logger.info("Returning schedules={}", results);
         return results;
     }
 
     public List<ScheduleDTO> getScheduleForPet(long petId) {
+        logger.info("Retrieving schedules for a pet: id={}", petId);
         List<ScheduleDTO> results = new ArrayList<>();
 
         List<Long> scheduleIds = scheduleDAO.findScheduleByPet(petId);
-
         for (Long scheduleId : scheduleIds) {
-            List<Long> employeeIds = scheduleDAO.findEmployeeBySchedule(scheduleId);
-            List<Long> petIds = scheduleDAO.findPetBySchedule(scheduleId);
-            List<EmployeeSkill> activities = scheduleDAO.findActivityBySchedule(scheduleId);
-
-            ScheduleDTO scheduleDTO = convertEntityToDTO(
-                    scheduleRepository.find(scheduleId),
-                    petIds,
-                    employeeIds,
-                    activities);
-
-            logger.info("** scheduleDTO = {}, petIDs = {}, employeeIds ={}, activities = {}", scheduleDTO, petIds, employeeIds, activities);
-            results.add(scheduleDTO);
+            results.add(getDTOByScheduleId(scheduleId));
         }
-
+        logger.info("Returning schedules={}", results);
         return results;
     }
 
     public List<ScheduleDTO> getScheduleForCustomer(long customerId) {
+        logger.info("Retrieving schedules for a customer: customer={}", customerId);
         List<ScheduleDTO> results = new ArrayList<>();
 
         CustomerDTO customerDTO = customerService.findCustomer(customerId);
@@ -146,32 +100,26 @@ public class ScheduleService {
         }
 
         for (Long scheduleId : scheduleIds) {
-            List<Long> employeeIds = scheduleDAO.findEmployeeBySchedule(scheduleId);
-            List<Long> petIds = scheduleDAO.findPetBySchedule(scheduleId);
-            List<EmployeeSkill> activities = scheduleDAO.findActivityBySchedule(scheduleId);
-
-            ScheduleDTO scheduleDTO = convertEntityToDTO(
-                    scheduleRepository.find(scheduleId),
-                    petIds,
-                    employeeIds,
-                    activities);
-
-            logger.info("** scheduleDTO = {}, petIDs = {}, employeeIds ={}, activities = {}", scheduleDTO, petIds, employeeIds, activities);
-            results.add(scheduleDTO);
+            results.add(getDTOByScheduleId(scheduleId));
         }
-
+        logger.info("Returning schedules={}", results);
         return results;
+    }
+
+    private ScheduleDTO getDTOByScheduleId(Long scheduleId) {
+        List<Long> employeeIds = scheduleDAO.findEmployeeBySchedule(scheduleId);
+        List<Long> petIds = scheduleDAO.findPetBySchedule(scheduleId);
+        List<EmployeeSkill> activities = scheduleDAO.findActivityBySchedule(scheduleId);
+        return convertEntityToDTO(scheduleRepository.find(scheduleId), petIds, employeeIds, activities);
     }
 
     private ScheduleDTO convertEntityToDTO(Schedule schedule, List<Long> petIds, List<Long> employeeIds, List<EmployeeSkill> activities) {
         ScheduleDTO scheduleDTO = new ScheduleDTO();
         scheduleDTO.setId(schedule.getId());
         scheduleDTO.setDate(schedule.getDate());
-
         scheduleDTO.setPetIds(petIds);
         scheduleDTO.setEmployeeIds(employeeIds);
         scheduleDTO.setActivities(new HashSet<>(activities));
-
         return scheduleDTO;
     }
 }

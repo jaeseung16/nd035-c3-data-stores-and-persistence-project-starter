@@ -89,9 +89,9 @@ public class EmployeeService {
 
         List<Skill> skillList = skillRepository.findBySkillIn(employeeDTO.getSkills());
 
-        List<Employee> employeeList = skillList.stream()
+        Set<Employee> employeeList = skillList.stream()
                 .map(Skill::getEmployee)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         DayOfWeek dayOfWeek = employeeDTO.getDate().getDayOfWeek();
 

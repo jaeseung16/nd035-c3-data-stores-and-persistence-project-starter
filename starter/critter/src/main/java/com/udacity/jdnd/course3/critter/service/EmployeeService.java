@@ -32,9 +32,112 @@ public class EmployeeService {
     private SkillRepository skillRepository;
 
     public EmployeeDTO saveEmployee(EmployeeDTO employeeDTO) {
-        logger.info("Saving employeeDTO.getDaysAvailable() = {}", employeeDTO.getDaysAvailable());
-        Employee employee = new Employee();
+        logger.info("Saving employeeDTO={}", employeeDTO);
 
+        Employee employee = getEntityFromDTO(employeeDTO);
+        employeeRepository.persist(employee);
+        logger.info("Persisted an employee: id={}", employee.getId());
+
+        DayAvailable dayAvailable = new DayAvailable();
+        if (employeeDTO.getDaysAvailable() != null && !employeeDTO.getDaysAvailable().isEmpty()) {
+            dayAvailable = getDayAvailable(employeeDTO.getDaysAvailable());
+            dayAvailable.setEmployeeId(employee.getId());
+            dayAvailableRepository.save(dayAvailable);
+        }
+
+        EmployeeDTO employeeDTOToReturn = convertEntityToDTO(employee, dayAvailable);
+        logger.info("Returning {}", employeeDTOToReturn);
+        return employeeDTOToReturn;
+    }
+
+    public EmployeeDTO getEmployee(long employeeId) {
+        logger.info("Retrieving an employee: id={}", employeeId);
+        Employee employee = employeeRepository.find(employeeId);
+        DayAvailable dayAvailable = dayAvailableRepository.findById(employeeId).orElse(null);
+
+        EmployeeDTO employeeDTO = convertEntityToDTO(employee, dayAvailable);
+        logger.info("Returning {}", employeeDTO);
+        return employeeDTO;
+    }
+
+    public void setAvailability(Set<DayOfWeek> daysAvailable, long employeeId) {
+        logger.info("Setting availability of an employee: id={}", employeeId);
+        DayAvailable dayAvailable = getDayAvailable(daysAvailable);
+        dayAvailable.setEmployeeId(employeeId);
+        dayAvailableRepository.save(dayAvailable);
+    }
+
+    public List<EmployeeDTO> findEmployeesForService(EmployeeRequestDTO employeeDTO) {
+        logger.info("Retrieving employees for services={}", employeeDTO.getSkills());
+
+        List<EmployeeDTO> employeeDTOList = new ArrayList<>();
+
+        Set<Employee> employeeList = skillRepository.findBySkillIn(employeeDTO.getSkills())
+                .stream()
+                .map(Skill::getEmployee)
+                .collect(Collectors.toSet());
+
+        DayOfWeek dayOfWeek = employeeDTO.getDate().getDayOfWeek();
+        Set<EmployeeSkill> skillSet = employeeDTO.getSkills();
+        for (Employee employee : employeeList) {
+            DayAvailable dayAvailable = dayAvailableRepository.findById(employee.getId()).orElse(null);
+            boolean availableOnAGivenDay = dayAvailable != null && checkIfAvailableOnAGivenDay(dayAvailable, dayOfWeek);
+            boolean hasSkill = checkIfEmployeeHasSkill(employee, skillSet);
+            if (availableOnAGivenDay && hasSkill) {
+                employeeDTOList.add(convertEntityToDTO(employee, dayAvailable));
+            }
+        }
+
+        logger.info("Returning {}", employeeDTOList);
+        return employeeDTOList;
+    }
+
+    private boolean checkIfAvailableOnAGivenDay(DayAvailable dayAvailable, DayOfWeek dayOfWeek) {
+        boolean matchedDayAvailable = false;
+        switch (dayOfWeek) {
+            case SUNDAY:
+                matchedDayAvailable = dayAvailable.getSunday();
+                break;
+            case MONDAY:
+                matchedDayAvailable = dayAvailable.getMonday();
+                break;
+            case TUESDAY:
+                matchedDayAvailable = dayAvailable.getTuesday();
+                break;
+            case WEDNESDAY:
+                matchedDayAvailable = dayAvailable.getWednesday();
+                break;
+            case THURSDAY:
+                matchedDayAvailable = dayAvailable.getThursday();
+                break;
+            case FRIDAY:
+                matchedDayAvailable = dayAvailable.getFriday();
+                break;
+            case SATURDAY:
+                matchedDayAvailable = dayAvailable.getSaturday();
+                break;
+        }
+        return matchedDayAvailable;
+    }
+
+    private boolean checkIfEmployeeHasSkill(Employee employee, Set<EmployeeSkill> employeeSkillSet) {
+        boolean matchedSkills = true;
+
+        List<EmployeeSkill> skillListFromEmployee = employee.getSkills().stream()
+                .map(Skill::getSkill)
+                .collect(Collectors.toList());
+
+        for (EmployeeSkill skill : employeeSkillSet) {
+            if (!skillListFromEmployee.contains(skill)) {
+                matchedSkills = false;
+                break;
+            }
+        }
+        return matchedSkills;
+    }
+
+    private Employee getEntityFromDTO(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
         employee.setName(employeeDTO.getName());
 
         List<Skill> skillList = new ArrayList<>();
@@ -46,109 +149,6 @@ public class EmployeeService {
         }
         employee.setSkills(skillList);
 
-        DayAvailable dayAvailable = new DayAvailable();
-
-        if (employeeDTO.getDaysAvailable() != null && !employeeDTO.getDaysAvailable().isEmpty()) {
-            dayAvailable = getDayAvailable(employeeDTO.getDaysAvailable());
-        }
-
-        logger.info("Persisting employee.getId() = {}", employee.getId());
-        logger.info("Persisting employee.getSkills() = {}", employee.getSkills());
-        employeeRepository.persist(employee);
-        logger.info("Persisting employee.getId() = {}", employee.getId());
-        logger.info("Persisting employee.getSkills() = {}", employee.getSkills());
-
-        logger.info("Persisting dayAvailable.getEmployeeId() = {}", dayAvailable.getEmployeeId());
-        dayAvailable.setEmployeeId(employee.getId());
-        dayAvailableRepository.save(dayAvailable);
-        logger.info("Persisting dayAvailable.getEmployeeId() = {}", dayAvailable.getEmployeeId());
-
-        logger.info("Returning EmployeeDTO = {}", employeeDTO);
-        return convertEntityToDTO(employee, dayAvailable);
-    }
-
-    public EmployeeDTO getEmployee(long employeeId) {
-        Employee employee = employeeRepository.find(employeeId);
-        DayAvailable dayAvailable = dayAvailableRepository.findById(employeeId).orElse(null);
-
-        logger.info("Persisting employee.getSkills() = {}", employee.getSkills());
-        logger.info("Returning dayAvailable = {}", dayAvailable);
-        return convertEntityToDTO(employee, dayAvailable);
-    }
-
-    public void setAvailability(Set<DayOfWeek> daysAvailable, long employeeId) {
-        DayAvailable dayAvailable = getDayAvailable(daysAvailable);
-        dayAvailable.setEmployeeId(employeeId);
-
-        dayAvailableRepository.save(dayAvailable);
-    }
-
-    public List<EmployeeDTO> findEmployeesForService(EmployeeRequestDTO employeeDTO) {
-        List<EmployeeDTO> employeeDTOList = new ArrayList<>();
-
-        List<Skill> skillList = skillRepository.findBySkillIn(employeeDTO.getSkills());
-
-        Set<Employee> employeeList = skillList.stream()
-                .map(Skill::getEmployee)
-                .collect(Collectors.toSet());
-
-        DayOfWeek dayOfWeek = employeeDTO.getDate().getDayOfWeek();
-
-        for (Employee employee : employeeList) {
-            DayAvailable dayAvailable = dayAvailableRepository.findById(employee.getId()).orElse(null);
-
-            boolean matchedDayAvailable = false;
-            if (dayAvailable != null) {
-                switch (dayOfWeek) {
-                    case SUNDAY:
-                        matchedDayAvailable = dayAvailable.getSunday();
-                        break;
-                    case MONDAY:
-                        matchedDayAvailable = dayAvailable.getMonday();
-                        break;
-                    case TUESDAY:
-                        matchedDayAvailable = dayAvailable.getTuesday();
-                        break;
-                    case WEDNESDAY:
-                        matchedDayAvailable = dayAvailable.getWednesday();
-                        break;
-                    case THURSDAY:
-                        matchedDayAvailable = dayAvailable.getThursday();
-                        break;
-                    case FRIDAY:
-                        matchedDayAvailable = dayAvailable.getFriday();
-                        break;
-                    case SATURDAY:
-                        matchedDayAvailable = dayAvailable.getSaturday();
-                        break;
-                }
-            }
-
-            boolean matchedSkills = true;
-            for (EmployeeSkill skill : employeeDTO.getSkills()) {
-                List<EmployeeSkill> skillListFromEmployee = employee.getSkills().stream()
-                        .map(Skill::getSkill)
-                        .collect(Collectors.toList());
-
-                if (!skillListFromEmployee.contains(skill)) {
-                    matchedSkills = false;
-                    break;
-                }
-            }
-
-            if (matchedDayAvailable && matchedSkills) {
-                employeeDTOList.add(convertEntityToDTO(employee, dayAvailable));
-            }
-        }
-
-        return employeeDTOList;
-    }
-
-    private Employee convertDTOToEntity(EmployeeDTO employeeDTO) {
-        Employee employee = new Employee();
-        employee.setId(employeeDTO.getId() > 0 ? employeeDTO.getId() : null);
-        employee.setName(employeeDTO.getName());
-        employee.setSkills(employee.getSkills());
         return employee;
     }
 
@@ -205,26 +205,28 @@ public class EmployeeService {
     private Set<DayOfWeek> populateDayOfWeekSet(DayAvailable dayAvailable) {
         Set<DayOfWeek> dayOfWeekSet = new HashSet<>();
 
-        if (dayAvailable.getSunday()) {
-            dayOfWeekSet.add(DayOfWeek.SUNDAY);
-        }
-        if (dayAvailable.getMonday()) {
-            dayOfWeekSet.add(DayOfWeek.MONDAY);
-        }
-        if (dayAvailable.getTuesday()) {
-            dayOfWeekSet.add(DayOfWeek.TUESDAY);
-        }
-        if (dayAvailable.getWednesday()) {
-            dayOfWeekSet.add(DayOfWeek.WEDNESDAY);
-        }
-        if (dayAvailable.getThursday()) {
-            dayOfWeekSet.add(DayOfWeek.THURSDAY);
-        }
-        if (dayAvailable.getFriday()) {
-            dayOfWeekSet.add(DayOfWeek.FRIDAY);
-        }
-        if (dayAvailable.getSaturday()) {
-            dayOfWeekSet.add(DayOfWeek.SATURDAY);
+        if (dayAvailable != null) {
+            if (dayAvailable.getSunday()) {
+                dayOfWeekSet.add(DayOfWeek.SUNDAY);
+            }
+            if (dayAvailable.getMonday()) {
+                dayOfWeekSet.add(DayOfWeek.MONDAY);
+            }
+            if (dayAvailable.getTuesday()) {
+                dayOfWeekSet.add(DayOfWeek.TUESDAY);
+            }
+            if (dayAvailable.getWednesday()) {
+                dayOfWeekSet.add(DayOfWeek.WEDNESDAY);
+            }
+            if (dayAvailable.getThursday()) {
+                dayOfWeekSet.add(DayOfWeek.THURSDAY);
+            }
+            if (dayAvailable.getFriday()) {
+                dayOfWeekSet.add(DayOfWeek.FRIDAY);
+            }
+            if (dayAvailable.getSaturday()) {
+                dayOfWeekSet.add(DayOfWeek.SATURDAY);
+            }
         }
 
         return dayOfWeekSet;

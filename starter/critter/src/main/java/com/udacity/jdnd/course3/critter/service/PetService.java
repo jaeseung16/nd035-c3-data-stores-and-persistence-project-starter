@@ -19,34 +19,35 @@ public class PetService {
     private PetRepository petRepository;
 
     public PetDTO savePet(PetDTO petDTO) {
-        logger.info("Saving petDTO.getOwnerId() = {}", petDTO.getOwnerId());
+        logger.info("Saving petDTO = {}", petDTO);
 
-        Pet pet = new Pet();
-        pet.setType(petDTO.getType());
-        pet.setName(petDTO.getName());
-        pet.setOwnerId(petDTO.getOwnerId());
-        pet.setBirthDate(petDTO.getBirthDate());
-        pet.setNotes(petDTO.getNotes());
-
+        Pet pet = getEntityFromDTO(petDTO);
         petRepository.save(pet);
 
-        logger.info("Saving pet.getOwnerId() = {}", pet.getOwnerId());
+        logger.info("Persisted a pet: id={}", pet.getOwnerId());
         return convertEntityToDTO(pet);
     }
 
     public PetDTO getPet(Long petId) {
-        return convertEntityToDTO(petRepository.getOne(petId));
+        logger.info("Retrieving pets by petId = {}", petId);
+        PetDTO petDTO = convertEntityToDTO(petRepository.getOne(petId));
+        logger.info("Returning {}", petDTO);
+        return petDTO;
     }
 
     public List<PetDTO> getPetByOwner(Long ownerId) {
+        logger.info("Retrieving pets by ownerId = {}", ownerId);
         List<Pet> petList = petRepository.findByOwnerId(ownerId);
+        logger.info("Returning {} pets with ownerId = {}", petList.size(), ownerId);
         return petList.stream()
                 .map(this::convertEntityToDTO)
                 .collect(Collectors.toList());
     }
 
     public List<PetDTO> getPets() {
+        logger.info("Retrieving all pets");
         List<Pet> petList = petRepository.findAll();
+        logger.info("Returning {} pets", petList.size());
         return petList.stream().map(this::convertEntityToDTO).collect(Collectors.toList());
     }
 
@@ -59,5 +60,15 @@ public class PetService {
         petDTO.setBirthDate(pet.getBirthDate());
         petDTO.setNotes(pet.getNotes());
         return petDTO;
+    }
+
+    private Pet getEntityFromDTO(PetDTO petDTO) {
+        Pet pet = new Pet();
+        pet.setType(petDTO.getType());
+        pet.setName(petDTO.getName());
+        pet.setOwnerId(petDTO.getOwnerId());
+        pet.setBirthDate(petDTO.getBirthDate());
+        pet.setNotes(petDTO.getNotes());
+        return pet;
     }
 }

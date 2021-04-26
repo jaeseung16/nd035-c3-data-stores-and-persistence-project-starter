@@ -52,4 +52,13 @@ public class CustomerDTO {
     public void setPetIds(List<Long> petIds) {
         this.petIds = petIds;
     }
+
+    @Override
+    public String toString() {
+        return "EmployeeDTO=[id=" + id + "," +
+                "name=" + name + "," +
+                "phoneNumber=" + phoneNumber + "," +
+                "notes=" + notes + "," +
+                "petIds=" + petIds + "]";
+    }
 }

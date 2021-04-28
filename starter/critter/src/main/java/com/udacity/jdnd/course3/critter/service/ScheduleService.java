@@ -1,10 +1,12 @@
 package com.udacity.jdnd.course3.critter.service;
 
+import com.udacity.jdnd.course3.critter.entity.Employee;
 import com.udacity.jdnd.course3.critter.entity.Schedule;
 import com.udacity.jdnd.course3.critter.repository.ScheduleDAO;
 import com.udacity.jdnd.course3.critter.repository.ScheduleRepository;
 import com.udacity.jdnd.course3.critter.schedule.ScheduleDTO;
 import com.udacity.jdnd.course3.critter.user.CustomerDTO;
+import com.udacity.jdnd.course3.critter.user.EmployeeDTO;
 import com.udacity.jdnd.course3.critter.user.EmployeeSkill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,12 @@ public class ScheduleService {
         List<ScheduleDTO> results = new ArrayList<>();
 
         List<Schedule> scheduleList = scheduleRepository.getAllSchedules();
+
+        if (scheduleList.isEmpty()) {
+            logger.error("No schedules found");
+            throw new ScheduleNotFoundException();
+        }
+
         for (Schedule schedule : scheduleList) {
             results.add(getDTOByScheduleId(schedule.getId()));
         }
@@ -68,6 +76,12 @@ public class ScheduleService {
         List<ScheduleDTO> results = new ArrayList<>();
 
         List<Long> scheduleIds = scheduleDAO.findScheduleByEmployee(employeeId);
+
+        if (scheduleIds.isEmpty()) {
+            logger.warn("Cannot find any schedules for a given employeeId = {}", employeeId);
+            throw new ScheduleNotFoundException("Cannot find any schedules for a given employeeId = " + employeeId + ".");
+        }
+
         for (Long scheduleId : scheduleIds) {
             results.add(getDTOByScheduleId(scheduleId));
         }
@@ -81,6 +95,12 @@ public class ScheduleService {
         List<ScheduleDTO> results = new ArrayList<>();
 
         List<Long> scheduleIds = scheduleDAO.findScheduleByPet(petId);
+
+        if (scheduleIds.isEmpty()) {
+            logger.warn("Cannot find any schedules for a given petId = {}", petId);
+            throw new ScheduleNotFoundException("Cannot find any schedules for a given petId = " + petId + ".");
+        }
+
         for (Long scheduleId : scheduleIds) {
             results.add(getDTOByScheduleId(scheduleId));
         }
@@ -97,6 +117,11 @@ public class ScheduleService {
         Set<Long> scheduleIds = new HashSet<>();
         for (Long petId : customerDTO.getPetIds()) {
             scheduleIds.addAll(scheduleDAO.findScheduleByPet(petId));
+        }
+
+        if (scheduleIds.isEmpty()) {
+            logger.warn("Cannot find any schedules for a given customerId = {}", customerId);
+            throw new ScheduleNotFoundException("Cannot find any schedules for a given customerId = " + customerId + ".");
         }
 
         for (Long scheduleId : scheduleIds) {

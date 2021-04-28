@@ -41,7 +41,8 @@ public class PetService {
         List<Pet> petList = petRepository.findByOwnerId(ownerId);
 
         if (petList.isEmpty()) {
-            throw new PetNotFoundException("Cannot find a pet for a given ownerId = " + ownerId + ".");
+            // Not throw PetNotFoundException since CustomerService calls this method
+            logger.warn("Cannot find any pets for a given ownerId = " + ownerId);
         }
 
         logger.info("Returning {} pets with ownerId = {}", petList.size(), ownerId);
@@ -55,6 +56,7 @@ public class PetService {
         List<Pet> petList = petRepository.findAll();
 
         if (petList.isEmpty()) {
+            logger.warn("No pets found");
             throw new PetNotFoundException();
         }
 

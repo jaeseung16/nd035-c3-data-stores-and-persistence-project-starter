@@ -42,6 +42,7 @@ public class CustomerService {
         List<Customer> customerList = customerRepository.findAll();
 
         if (customerList.isEmpty()) {
+            logger.warn("No customers found");
             throw new CustomerNotFoundException();
         }
 
@@ -73,7 +74,8 @@ public class CustomerService {
         Customer customer = customerRepository.find(customerId);
 
         if (customer == null) {
-            throw new CustomerNotFoundException();
+            logger.warn("Cannot find a customer for a given id = {}", customerId);
+            throw new CustomerNotFoundException("Cannot find a customer for a given id = " + customerId + ".");
         }
 
         List<Long> petIds = findPetIds(customerId);

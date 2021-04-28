@@ -55,7 +55,8 @@ public class EmployeeService {
         Employee employee = employeeRepository.find(employeeId);
 
         if (employee == null) {
-            throw new EmployeeNotFoundException();
+            logger.warn("Cannot find an employee for a given id = {}", employeeId);
+            throw new EmployeeNotFoundException("Cannot find an employee for a given id = " + employeeId + ".");
         }
 
         DayAvailable dayAvailable = dayAvailableRepository.findById(employeeId).orElse(null);
@@ -71,7 +72,8 @@ public class EmployeeService {
         Employee employee = employeeRepository.find(employeeId);
 
         if (employee == null) {
-            throw new EmployeeNotFoundException();
+            logger.warn("Cannot find a employees for a given id = {}", employeeId);
+            throw new EmployeeNotFoundException("Cannot find a employees for a given id = " + employeeId + ".");
         }
 
         DayAvailable dayAvailable = getDayAvailable(daysAvailable);
@@ -83,14 +85,14 @@ public class EmployeeService {
         logger.info("Retrieving employees for services={}", employeeDTO.getSkills());
 
         List<EmployeeDTO> employeeDTOList = new ArrayList<>();
-
         Set<Employee> employeeSet = skillRepository.findBySkillIn(employeeDTO.getSkills())
                 .stream()
                 .map(Skill::getEmployee)
                 .collect(Collectors.toSet());
 
         if (employeeSet.isEmpty()) {
-            throw new EmployeeNotFoundException();
+            logger.warn("Cannot find a employees for given services = {}", employeeDTO.getSkills());
+            throw new EmployeeNotFoundException("Cannot find any employees for given services = " + employeeDTO.getSkills() + ".");
         }
 
         DayOfWeek dayOfWeek = employeeDTO.getDate().getDayOfWeek();
@@ -102,6 +104,11 @@ public class EmployeeService {
             if (availableOnAGivenDay && hasSkill) {
                 employeeDTOList.add(convertEntityToDTO(employee, dayAvailable));
             }
+        }
+
+        if (employeeDTOList.isEmpty()) {
+            logger.warn("Cannot find a employees for a given date = {}", employeeDTO.getDate());
+            throw new EmployeeNotFoundException("Cannot find any employees for a given date = " + employeeDTO.getDate() + ".");
         }
 
         logger.info("Returning {}", employeeDTOList);

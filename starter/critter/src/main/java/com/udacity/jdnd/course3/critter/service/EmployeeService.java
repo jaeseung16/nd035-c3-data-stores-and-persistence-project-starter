@@ -53,6 +53,11 @@ public class EmployeeService {
     public EmployeeDTO getEmployee(long employeeId) {
         logger.info("Retrieving an employee: id={}", employeeId);
         Employee employee = employeeRepository.find(employeeId);
+
+        if (employee == null) {
+            throw new EmployeeNotFoundException();
+        }
+
         DayAvailable dayAvailable = dayAvailableRepository.findById(employeeId).orElse(null);
 
         EmployeeDTO employeeDTO = convertEntityToDTO(employee, dayAvailable);
@@ -62,6 +67,13 @@ public class EmployeeService {
 
     public void setAvailability(Set<DayOfWeek> daysAvailable, long employeeId) {
         logger.info("Setting availability of an employee: id={}", employeeId);
+
+        Employee employee = employeeRepository.find(employeeId);
+
+        if (employee == null) {
+            throw new EmployeeNotFoundException();
+        }
+
         DayAvailable dayAvailable = getDayAvailable(daysAvailable);
         dayAvailable.setEmployeeId(employeeId);
         dayAvailableRepository.save(dayAvailable);
@@ -72,14 +84,18 @@ public class EmployeeService {
 
         List<EmployeeDTO> employeeDTOList = new ArrayList<>();
 
-        Set<Employee> employeeList = skillRepository.findBySkillIn(employeeDTO.getSkills())
+        Set<Employee> employeeSet = skillRepository.findBySkillIn(employeeDTO.getSkills())
                 .stream()
                 .map(Skill::getEmployee)
                 .collect(Collectors.toSet());
 
+        if (employeeSet.isEmpty()) {
+            throw new EmployeeNotFoundException();
+        }
+
         DayOfWeek dayOfWeek = employeeDTO.getDate().getDayOfWeek();
         Set<EmployeeSkill> skillSet = employeeDTO.getSkills();
-        for (Employee employee : employeeList) {
+        for (Employee employee : employeeSet) {
             DayAvailable dayAvailable = dayAvailableRepository.findById(employee.getId()).orElse(null);
             boolean availableOnAGivenDay = dayAvailable != null && checkIfAvailableOnAGivenDay(dayAvailable, dayOfWeek);
             boolean hasSkill = checkIfEmployeeHasSkill(employee, skillSet);

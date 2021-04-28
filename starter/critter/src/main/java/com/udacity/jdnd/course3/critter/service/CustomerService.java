@@ -40,6 +40,11 @@ public class CustomerService {
         List<CustomerDTO> customerDTOList = new ArrayList<>();
 
         List<Customer> customerList = customerRepository.findAll();
+
+        if (customerList.isEmpty()) {
+            throw new CustomerNotFoundException();
+        }
+
         for (Customer customer : customerList) {
             List<Long> petIds = findPetIds(customer.getId());
             customerDTOList.add(convertEntityToDTO(customer, petIds));
@@ -66,6 +71,11 @@ public class CustomerService {
 
     private CustomerDTO getCustomerDTOFromEntities(long customerId) {
         Customer customer = customerRepository.find(customerId);
+
+        if (customer == null) {
+            throw new CustomerNotFoundException();
+        }
+
         List<Long> petIds = findPetIds(customerId);
         return convertEntityToDTO(customer, petIds);
     }

@@ -30,6 +30,7 @@ public class PetService {
 
     public PetDTO getPet(Long petId) {
         logger.info("Retrieving pets by petId = {}", petId);
+        // petRepository.getOne() will throw EntityNotFoundException if no pet can be found
         PetDTO petDTO = convertEntityToDTO(petRepository.getOne(petId));
         logger.info("Returning {}", petDTO);
         return petDTO;
@@ -38,6 +39,11 @@ public class PetService {
     public List<PetDTO> getPetByOwner(Long ownerId) {
         logger.info("Retrieving pets by ownerId = {}", ownerId);
         List<Pet> petList = petRepository.findByOwnerId(ownerId);
+
+        if (petList.isEmpty()) {
+            throw new PetNotFoundException("Cannot find a pet for a given ownerId = " + ownerId + ".");
+        }
+
         logger.info("Returning {} pets with ownerId = {}", petList.size(), ownerId);
         return petList.stream()
                 .map(this::convertEntityToDTO)
@@ -47,6 +53,11 @@ public class PetService {
     public List<PetDTO> getPets() {
         logger.info("Retrieving all pets");
         List<Pet> petList = petRepository.findAll();
+
+        if (petList.isEmpty()) {
+            throw new PetNotFoundException();
+        }
+
         logger.info("Returning {} pets", petList.size());
         return petList.stream().map(this::convertEntityToDTO).collect(Collectors.toList());
     }

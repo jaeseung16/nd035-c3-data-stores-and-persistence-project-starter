@@ -19,7 +19,7 @@ public class PetService {
     private PetRepository petRepository;
 
     public PetDTO savePet(PetDTO petDTO) {
-        logger.info("Saving petDTO = {}", petDTO);
+        logger.info("Saving petDTO={}", petDTO);
 
         Pet pet = getEntityFromDTO(petDTO);
         petRepository.save(pet);

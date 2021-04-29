@@ -10,6 +10,7 @@ import com.udacity.jdnd.course3.critter.pet.PetRequestDTO;
 import com.udacity.jdnd.course3.critter.pet.PetType;
 import com.udacity.jdnd.course3.critter.schedule.ScheduleController;
 import com.udacity.jdnd.course3.critter.schedule.ScheduleDTO;
+import com.udacity.jdnd.course3.critter.schedule.ScheduleRequestDTO;
 import com.udacity.jdnd.course3.critter.user.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -306,7 +307,7 @@ public class CritterFunctionalTest {
     }
 
     @Test
-    public void testUpdateCustomer(){
+    public void testUpdateCustomer() {
         CustomerDTO customerDTO = createCustomerDTO();
         CustomerDTO newCustomer = userController.saveCustomer(customerDTO);
 
@@ -328,7 +329,7 @@ public class CritterFunctionalTest {
     }
 
     @Test
-    public void testUpdatePet(){
+    public void testUpdatePet() {
         CustomerDTO customerDTO = createCustomerDTO();
         CustomerDTO newCustomer = userController.saveCustomer(customerDTO);
 
@@ -351,5 +352,35 @@ public class CritterFunctionalTest {
         petRequestDTO.setType(PetType.CAT);
         petRequestDTO.setBirthDate(LocalDate.of(2021, 4, 29));
         return petRequestDTO;
+    }
+
+    @Test
+    public void testUpdateSchedule() {
+        EmployeeDTO employeeTemp = createEmployeeDTO();
+        employeeTemp.setDaysAvailable(Sets.newHashSet(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY));
+        EmployeeDTO employeeDTO = userController.saveEmployee(employeeTemp);
+        CustomerDTO customerDTO = userController.saveCustomer(createCustomerDTO());
+        PetDTO petTemp = createPetDTO();
+        petTemp.setOwnerId(customerDTO.getId());
+        PetDTO petDTO = petController.savePet(petTemp);
+
+        LocalDate date = LocalDate.of(2019, 12, 25);
+        List<Long> petList = Lists.newArrayList(petDTO.getId());
+        List<Long> employeeList = Lists.newArrayList(employeeDTO.getId());
+        Set<EmployeeSkill> skillSet =  Sets.newHashSet(EmployeeSkill.PETTING);
+
+        scheduleController.createSchedule(createScheduleDTO(petList, employeeList, date, skillSet));
+        ScheduleDTO scheduleDTO = scheduleController.getAllSchedules().get(0);
+
+        ScheduleRequestDTO scheduleRequestDTO = new ScheduleRequestDTO();
+        scheduleRequestDTO.setDate(LocalDate.of(2020, 1, 1));
+
+        ScheduleDTO updatedScheduleDTO = scheduleController.updateSchedule(scheduleRequestDTO, scheduleDTO.getId());
+
+        Assertions.assertEquals(scheduleDTO.getId(), updatedScheduleDTO.getId());
+        Assertions.assertEquals(scheduleDTO.getActivities(), updatedScheduleDTO.getActivities());
+        Assertions.assertEquals(scheduleDTO.getEmployeeIds(), updatedScheduleDTO.getEmployeeIds());
+        Assertions.assertEquals(scheduleDTO.getPetIds(), updatedScheduleDTO.getPetIds());
+        Assertions.assertEquals(scheduleRequestDTO.getDate(), updatedScheduleDTO.getDate());
     }
 }

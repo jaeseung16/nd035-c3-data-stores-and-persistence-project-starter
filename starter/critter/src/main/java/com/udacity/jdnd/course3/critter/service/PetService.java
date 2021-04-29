@@ -2,6 +2,7 @@ package com.udacity.jdnd.course3.critter.service;
 
 import com.udacity.jdnd.course3.critter.entity.Pet;
 import com.udacity.jdnd.course3.critter.pet.PetDTO;
+import com.udacity.jdnd.course3.critter.pet.PetRequestDTO;
 import com.udacity.jdnd.course3.critter.repository.PetRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public class PetService {
         Pet pet = getEntityFromDTO(petDTO);
         petRepository.save(pet);
 
-        logger.info("Persisted a pet: id={}", pet.getOwnerId());
+        logger.info("Persisted a pet: id={}", pet.getId());
         return convertEntityToDTO(pet);
     }
 
@@ -32,6 +33,23 @@ public class PetService {
         logger.info("Retrieving pets by petId = {}", petId);
         // petRepository.getOne() will throw EntityNotFoundException if no pet can be found
         PetDTO petDTO = convertEntityToDTO(petRepository.getOne(petId));
+        logger.info("Returning {}", petDTO);
+        return petDTO;
+    }
+
+    public PetDTO updatePet(PetRequestDTO petRequestDTO, Long petId) {
+        logger.info("Updating a pet: id={}", petId);
+
+        PetDTO petDTO = convertEntityToDTO(petRepository.getOne(petId));
+        petDTO.setType(petRequestDTO.getType());
+        petDTO.setName(petRequestDTO.getName());
+        petDTO.setOwnerId(petRequestDTO.getOwnerId());
+        petDTO.setBirthDate(petRequestDTO.getBirthDate());
+        petDTO.setNotes(petRequestDTO.getNotes());
+
+        Pet pet = getEntityFromDTO(petDTO);
+        petRepository.saveAndFlush(pet);
+
         logger.info("Returning {}", petDTO);
         return petDTO;
     }
@@ -77,6 +95,7 @@ public class PetService {
 
     private Pet getEntityFromDTO(PetDTO petDTO) {
         Pet pet = new Pet();
+        pet.setId(petDTO.getId() != 0 ? petDTO.getId() : null);
         pet.setType(petDTO.getType());
         pet.setName(petDTO.getName());
         pet.setOwnerId(petDTO.getOwnerId());

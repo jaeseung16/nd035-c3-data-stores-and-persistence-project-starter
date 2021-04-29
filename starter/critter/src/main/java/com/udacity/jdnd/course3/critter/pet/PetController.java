@@ -26,6 +26,11 @@ public class PetController {
         return petService.getPet(petId);
     }
 
+    @PutMapping("/{petId}")
+    public PetDTO updatePet(@RequestBody PetRequestDTO petRequestDTO, @PathVariable long petId) {
+        return petService.updatePet(petRequestDTO, petId);
+    }
+
     @GetMapping
     public List<PetDTO> getPets() {
         return petService.getPets();

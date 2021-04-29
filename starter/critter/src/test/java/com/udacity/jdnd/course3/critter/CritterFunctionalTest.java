@@ -2,6 +2,7 @@ package com.udacity.jdnd.course3.critter;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.udacity.jdnd.course3.critter.entity.Customer;
 import com.udacity.jdnd.course3.critter.pet.PetController;
 import com.udacity.jdnd.course3.critter.pet.PetDTO;
 import com.udacity.jdnd.course3.critter.pet.PetType;
@@ -302,4 +303,25 @@ public class CritterFunctionalTest {
         Assertions.assertEquals(sched1.getDate(), sched2.getDate());
     }
 
+    @Test
+    public void testUpdateCustomer(){
+        CustomerDTO customerDTO = createCustomerDTO();
+        CustomerDTO newCustomer = userController.saveCustomer(customerDTO);
+
+        CustomerRequestDTO customerRequestDTO = createCustomerRequestDTO();
+        CustomerDTO updatedCustomer = userController.updateCustomer(customerRequestDTO, newCustomer.getId());
+
+        CustomerDTO retrievedCustomer = userController.getAllCustomers().get(0);
+
+        Assertions.assertEquals(customerRequestDTO.getNotes(), updatedCustomer.getNotes());
+        Assertions.assertEquals(newCustomer.getId(), retrievedCustomer.getId());
+    }
+
+    private static CustomerRequestDTO createCustomerRequestDTO() {
+        CustomerRequestDTO customerRequestDTO = new CustomerRequestDTO();
+        customerRequestDTO.setName("TestEmployee");
+        customerRequestDTO.setPhoneNumber("123-456-789");
+        customerRequestDTO.setNotes("Test Updating Customer");
+        return customerRequestDTO;
+    }
 }

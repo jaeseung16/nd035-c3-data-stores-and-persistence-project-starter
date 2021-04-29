@@ -4,6 +4,7 @@ import com.udacity.jdnd.course3.critter.entity.Customer;
 import com.udacity.jdnd.course3.critter.pet.PetDTO;
 import com.udacity.jdnd.course3.critter.repository.CustomerRepository;
 import com.udacity.jdnd.course3.critter.user.CustomerDTO;
+import com.udacity.jdnd.course3.critter.user.CustomerRequestDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,21 @@ public class CustomerService {
 
         logger.info("Retrieving {} customers", customerDTOList.size());
         return customerDTOList;
+    }
+
+    public CustomerDTO updateCustomer(CustomerRequestDTO customerRequestDTO, Long customerId) {
+        logger.info("Updating a customer: id={}", customerId);
+
+        CustomerDTO customerDTO = getCustomerDTOFromEntities(customerId);
+        customerDTO.setName(customerRequestDTO.getName());
+        customerDTO.setPhoneNumber(customerRequestDTO.getPhoneNumber());
+        customerDTO.setNotes(customerRequestDTO.getNotes());
+
+        Customer customer = getEntityFromDTO(customerDTO);
+        customerRepository.merge(customer);
+
+        logger.info("Returning {}", customerDTO);
+        return customerDTO;
     }
 
     public CustomerDTO findCustomer(long customerId) {

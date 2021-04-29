@@ -31,8 +31,13 @@ public class UserController {
     }
 
     @GetMapping("/customer")
-    public List<CustomerDTO> getAllCustomers(){
+    public List<CustomerDTO> getAllCustomers() {
         return customerService.getAllCustomers();
+    }
+
+    @PutMapping("/customer/{customerId}")
+    public CustomerDTO updateCustomer(@RequestBody CustomerRequestDTO customerRequestDTO, @PathVariable long customerId) {
+        return customerService.updateCustomer(customerRequestDTO, customerId);
     }
 
     @GetMapping("/customer/pet/{petId}")

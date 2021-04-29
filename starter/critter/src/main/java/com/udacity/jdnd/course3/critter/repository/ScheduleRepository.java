@@ -22,6 +22,10 @@ public class ScheduleRepository {
         return entityManager.find(Schedule.class, id);
     }
 
+    public void merge(Schedule schedule) {
+        entityManager.merge(schedule);
+    }
+
     public List<Schedule> getAllSchedules() {
         return entityManager
                 .createNamedQuery("Schedule.findAll", Schedule.class)

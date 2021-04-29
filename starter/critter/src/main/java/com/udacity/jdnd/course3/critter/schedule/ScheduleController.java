@@ -26,6 +26,11 @@ public class ScheduleController {
         return scheduleService.getAllSchedules();
     }
 
+    @PutMapping("/{scheduleId}")
+    public ScheduleDTO updateSchedule(@RequestBody ScheduleRequestDTO scheduleRequestDTO, @PathVariable long scheduleId) {
+        return scheduleService.updateSchedule(scheduleRequestDTO, scheduleId);
+    }
+
     @GetMapping("/pet/{petId}")
     public List<ScheduleDTO> getScheduleForPet(@PathVariable long petId) {
         return scheduleService.getScheduleForPet(petId);

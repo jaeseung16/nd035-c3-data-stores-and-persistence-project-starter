@@ -1,12 +1,11 @@
 package com.udacity.jdnd.course3.critter.service;
 
-import com.udacity.jdnd.course3.critter.entity.Employee;
 import com.udacity.jdnd.course3.critter.entity.Schedule;
 import com.udacity.jdnd.course3.critter.repository.ScheduleDAO;
 import com.udacity.jdnd.course3.critter.repository.ScheduleRepository;
 import com.udacity.jdnd.course3.critter.schedule.ScheduleDTO;
+import com.udacity.jdnd.course3.critter.schedule.ScheduleRequestDTO;
 import com.udacity.jdnd.course3.critter.user.CustomerDTO;
-import com.udacity.jdnd.course3.critter.user.EmployeeDTO;
 import com.udacity.jdnd.course3.critter.user.EmployeeSkill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +68,25 @@ public class ScheduleService {
 
         logger.info("Returning {} schedules", results.size());
         return results;
+    }
+
+    public ScheduleDTO updateSchedule(ScheduleRequestDTO scheduleRequestDTO, Long scheduleId) {
+        logger.info("Updating a schedule: id={}", scheduleId);
+
+        Schedule schedule = scheduleRepository.find(scheduleId);
+
+        if (schedule == null) {
+            logger.warn("Cannot find a schedule for a given id = {}", scheduleId);
+            throw new ScheduleNotFoundException("Cannot find a schedule for a given id = " + scheduleId + ".");
+        }
+
+        schedule.setDate(scheduleRequestDTO.getDate());
+        scheduleRepository.merge(schedule);
+
+        ScheduleDTO scheduleDTO = getDTOByScheduleId(scheduleId);
+
+        logger.info("Returning {}", scheduleDTO);
+        return scheduleDTO;
     }
 
     public List<ScheduleDTO> getScheduleForEmployee(long employeeId) {

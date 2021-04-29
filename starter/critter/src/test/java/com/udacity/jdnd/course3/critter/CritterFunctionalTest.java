@@ -3,8 +3,10 @@ package com.udacity.jdnd.course3.critter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.udacity.jdnd.course3.critter.entity.Customer;
+import com.udacity.jdnd.course3.critter.entity.Pet;
 import com.udacity.jdnd.course3.critter.pet.PetController;
 import com.udacity.jdnd.course3.critter.pet.PetDTO;
+import com.udacity.jdnd.course3.critter.pet.PetRequestDTO;
 import com.udacity.jdnd.course3.critter.pet.PetType;
 import com.udacity.jdnd.course3.critter.schedule.ScheduleController;
 import com.udacity.jdnd.course3.critter.schedule.ScheduleDTO;
@@ -323,5 +325,31 @@ public class CritterFunctionalTest {
         customerRequestDTO.setPhoneNumber("123-456-789");
         customerRequestDTO.setNotes("Test Updating Customer");
         return customerRequestDTO;
+    }
+
+    @Test
+    public void testUpdatePet(){
+        CustomerDTO customerDTO = createCustomerDTO();
+        CustomerDTO newCustomer = userController.saveCustomer(customerDTO);
+
+        PetDTO petDTO = createPetDTO();
+        petDTO.setOwnerId(newCustomer.getId());
+        PetDTO newPet = petController.savePet(petDTO);
+
+        PetRequestDTO petRequestDTO = createPetRequestDTO();
+        PetDTO updatedPet = petController.updatePet(petRequestDTO, newPet.getId());
+
+        PetDTO retrievedPet = petController.getPet(newPet.getId());
+
+        Assertions.assertEquals(retrievedPet.getId(), updatedPet.getId());
+        Assertions.assertEquals(retrievedPet.getBirthDate(), petRequestDTO.getBirthDate());
+    }
+
+    private static PetRequestDTO createPetRequestDTO() {
+        PetRequestDTO petRequestDTO = new PetRequestDTO();
+        petRequestDTO.setName("TestPet");
+        petRequestDTO.setType(PetType.CAT);
+        petRequestDTO.setBirthDate(LocalDate.of(2021, 4, 29));
+        return petRequestDTO;
     }
 }

@@ -31,6 +31,11 @@ public class ScheduleController {
         return scheduleService.updateSchedule(scheduleRequestDTO, scheduleId);
     }
 
+    @DeleteMapping("/{scheduleId}")
+    public void deleteSchedule(@PathVariable long scheduleId) {
+        scheduleService.deleteSchedule(scheduleId);
+    }
+
     @GetMapping("/pet/{petId}")
     public List<ScheduleDTO> getScheduleForPet(@PathVariable long petId) {
         return scheduleService.getScheduleForPet(petId);

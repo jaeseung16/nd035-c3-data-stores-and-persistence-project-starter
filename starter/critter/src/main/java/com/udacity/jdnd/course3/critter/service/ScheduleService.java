@@ -59,7 +59,7 @@ public class ScheduleService {
 
         if (scheduleList.isEmpty()) {
             logger.error("No schedules found");
-            throw new ScheduleNotFoundException();
+            throw new ScheduleNotFoundException("No schedules found");
         }
 
         for (Schedule schedule : scheduleList) {
@@ -87,6 +87,22 @@ public class ScheduleService {
 
         logger.info("Returning {}", scheduleDTO);
         return scheduleDTO;
+    }
+
+    public void deleteSchedule(Long scheduleId) {
+        logger.info("Deleting a schedule: id={}", scheduleId);
+
+        Schedule schedule = scheduleRepository.find(scheduleId);
+        if (schedule == null) {
+            logger.warn("Cannot find a schedule for a given id = {}", scheduleId);
+            throw new ScheduleNotFoundException("Cannot find a schedule for a given id = " + scheduleId + ".");
+        }
+
+        scheduleDAO.deleteEmployeeBySchedule(scheduleId);
+        scheduleDAO.deletePetsBySchedule(scheduleId);
+        scheduleDAO.deleteActivitiesBySchedule(scheduleId);
+
+        scheduleRepository.delete(schedule);
     }
 
     public List<ScheduleDTO> getScheduleForEmployee(long employeeId) {

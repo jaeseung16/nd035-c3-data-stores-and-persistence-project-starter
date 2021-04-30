@@ -25,13 +25,16 @@ public class ScheduleDAOImpl implements ScheduleDAO {
     private static final String INSERT_EMPLOYEE = "INSERT INTO employee_schedule (employee_id, schedule_id) VALUES (:" + EMPLOYEE_ID + ", :" + SCHEDULE_ID + ")";
     private static final String FIND_EMPLOYEE = "SELECT s.employee_id FROM employee_schedule s WHERE schedule_id = :" + SCHEDULE_ID;
     private static final String FIND_SCHEDULE_BY_EMPLOYEE = "SELECT s.schedule_id FROM employee_schedule s WHERE employee_id = :" + EMPLOYEE_ID;
+    private static final String DELETE_EMPLOYEE_BY_SCHEDULE = "DELETE FROM employee_schedule WHERE schedule_id = :" + SCHEDULE_ID;
 
     private static final String INSERT_PET = "INSERT INTO pet_schedule (pet_id, schedule_id) VALUES (:" + PET_ID + ", :" + SCHEDULE_ID + ")";
     private static final String FIND_PET = "SELECT s.pet_id FROM pet_schedule s WHERE schedule_id = :" + SCHEDULE_ID;
     private static final String FIND_SCHEDULE_BY_PET = "SELECT s.schedule_id FROM pet_schedule s WHERE pet_id = :" + PET_ID;
+    private static final String DELETE_PET_BY_SCHEDULE = "DELETE FROM pet_schedule WHERE schedule_id = :" + SCHEDULE_ID;
 
     private static final String INSERT_ACTIVITY = "INSERT INTO activity_schedule (activity_id, schedule_id) VALUES (:" + ACTIVITY_ID + ", :" + SCHEDULE_ID + ")";
     private static final String FIND_ACTIVITY = "SELECT s.activity_id FROM activity_schedule s WHERE schedule_id = :" + SCHEDULE_ID;
+    private static final String DELETE_ACTIVITY_BY_SCHEDULE = "DELETE FROM activity_schedule WHERE schedule_id = :" + SCHEDULE_ID;
 
     @Override
     public void addEmployeeBySchedule(Long employeeId, Long scheduleId) {
@@ -54,6 +57,12 @@ public class ScheduleDAOImpl implements ScheduleDAO {
         return jdbcTemplate.queryForList(FIND_SCHEDULE_BY_EMPLOYEE,
                 new MapSqlParameterSource().addValue(EMPLOYEE_ID, employeeId),
                 Long.class);
+    }
+
+    @Override
+    public void deleteEmployeeBySchedule(Long scheduleId) {
+        jdbcTemplate.update(DELETE_EMPLOYEE_BY_SCHEDULE,
+                new MapSqlParameterSource().addValue(SCHEDULE_ID, scheduleId));
     }
 
     @Override
@@ -80,6 +89,12 @@ public class ScheduleDAOImpl implements ScheduleDAO {
     }
 
     @Override
+    public void deletePetsBySchedule(Long scheduleId) {
+        jdbcTemplate.update(DELETE_PET_BY_SCHEDULE,
+                new MapSqlParameterSource().addValue(SCHEDULE_ID, scheduleId));
+    }
+
+    @Override
     public void addActivityBySchedule(EmployeeSkill skill, Long scheduleId) {
         jdbcTemplate.update(
                 INSERT_ACTIVITY,
@@ -95,5 +110,11 @@ public class ScheduleDAOImpl implements ScheduleDAO {
                 Integer.class);
 
         return results.stream().map(EmployeeSkill::fromDbValue).collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteActivitiesBySchedule(Long scheduleId) {
+        jdbcTemplate.update(DELETE_ACTIVITY_BY_SCHEDULE,
+                new MapSqlParameterSource().addValue(SCHEDULE_ID, scheduleId));
     }
 }
